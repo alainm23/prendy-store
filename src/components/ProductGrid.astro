@@ -5,15 +5,16 @@ import ProductCard from './ProductCard.astro';
 interface Props {
   products: StoreProduct[];
   currency: string;
+  baseUrl?: string;
 }
 
-const { products, currency } = Astro.props;
+const { products, currency, baseUrl = '' } = Astro.props;
 ---
 
 {products.length > 0 ? (
   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
     {products.map((product) => (
-      <ProductCard product={product} currency={currency} />
+      <ProductCard product={product} currency={currency} baseUrl={baseUrl} />
     ))}
   </div>
 ) : (

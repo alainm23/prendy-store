@@ -1,5 +1,6 @@
 ---
 import '@/styles/global.css';
+import { ViewTransitions } from 'astro:transitions';
 
 interface Props {
   title: string;
@@ -22,6 +23,7 @@ const { title, description, color = '#3499f8', logo } = Astro.props;
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <meta name="view-transition" content="same-origin" />
+    <ViewTransitions />
     <title>{title}</title>
     <style define:vars={{ brandColor: color, brandColorDark: color + 'dd' }}>
       :root {

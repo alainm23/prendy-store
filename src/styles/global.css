@@ -29,3 +29,12 @@ body {
 ::view-transition-new(root) {
   animation: fade-in 0.25s ease;
 }
+
+::view-transition-image-pair(*) {
+  overflow: hidden;
+}
+
+[style*="view-transition-name: product-img"] {
+  border-radius: 16px;
+  overflow: hidden;
+}

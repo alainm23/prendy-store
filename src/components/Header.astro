@@ -4,12 +4,13 @@ import type { StoreBusiness } from '@/lib/api';
 interface Props {
   business: StoreBusiness;
   branchCount?: number;
+  slug?: string;
 }
 
-const { business, branchCount = 1 } = Astro.props;
+const { business, branchCount = 1, slug = '' } = Astro.props;
 ---
 
-<header class="sticky top-0 z-40">
+<header class="sticky top-0 z-40" transition:animate="none">
   <!-- Banner con color de marca -->
   <div class="h-1" style={`background: var(--brand-color)`}></div>
 
@@ -41,10 +42,10 @@ const { business, branchCount = 1 } = Astro.props;
           )}
         </div>
 
-        <!-- Actions -->
-        <div class="flex items-center gap-1.5">
+        <!-- Actions Desktop -->
+        <div class="hidden sm:flex items-center gap-1.5">
           <a
-            href="/favorites"
+            href={`/${slug}/favorites`}
             class="flex items-center justify-center w-9 h-9 rounded-xl bg-gray-50 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors"
             aria-label="Favoritos"
           >
@@ -55,7 +56,7 @@ const { business, branchCount = 1 } = Astro.props;
 
           {branchCount > 1 && (
             <a
-              href="/info"
+              href={`/${slug}/info`}
               class="flex items-center justify-center w-9 h-9 rounded-xl bg-gray-50 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors"
               aria-label="Sucursales"
             >
@@ -81,7 +82,98 @@ const { business, branchCount = 1 } = Astro.props;
             </a>
           )}
         </div>
+
+        <!-- Actions Mobile -->
+        <div class="flex sm:hidden items-center gap-1.5">
+          {business.phone && business.dial_code && (
+            <a
+              href={`https://wa.me/${(business.dial_code + business.phone).replace(/[^0-9]/g, '')}`}
+              target="_blank"
+              rel="noopener"
+              class="flex items-center justify-center w-9 h-9 rounded-xl bg-gray-50 dark:bg-neutral-800 text-green-600 dark:text-green-500 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors"
+              aria-label="WhatsApp"
+            >
+              <svg class="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/>
+              </svg>
+            </a>
+          )}
+
+          <!-- Hamburger menu button -->
+          <button
+            id="mobile-menu-btn"
+            class="flex items-center justify-center w-9 h-9 rounded-xl bg-gray-50 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors"
+            aria-label="Menú"
+          >
+            <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </header>
+
+<!-- Mobile menu popover (full-page backdrop) -->
+<div id="mobile-menu-backdrop" class="hidden fixed inset-0 z-50" aria-hidden="true">
+    <div class="absolute inset-0 bg-black/30" id="mobile-menu-overlay"></div>
+    <div id="mobile-menu-panel" class="absolute top-16 right-4 w-48 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-2xl shadow-xl overflow-hidden opacity-0 scale-95 transition-all duration-200 origin-top-right">
+      <div class="py-2">
+        <a
+          href={`/${slug}/favorites`}
+          class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
+        >
+          <svg class="w-[16px] h-[16px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+          Favoritos
+        </a>
+        {branchCount > 1 && (
+          <a
+            href={`/${slug}/info`}
+            class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
+          >
+            <svg class="w-[16px] h-[16px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Sucursales
+          </a>
+        )}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const btn = document.getElementById('mobile-menu-btn');
+    const backdrop = document.getElementById('mobile-menu-backdrop');
+    const overlay = document.getElementById('mobile-menu-overlay');
+    const panel = document.getElementById('mobile-menu-panel');
+    if (!btn || !backdrop || !overlay || !panel) return;
+
+    function open() {
+      backdrop.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        panel.classList.remove('opacity-0', 'scale-95');
+        panel.classList.add('opacity-100', 'scale-100');
+      });
+    }
+
+    function close() {
+      panel.classList.remove('opacity-100', 'scale-100');
+      panel.classList.add('opacity-0', 'scale-95');
+      setTimeout(() => backdrop.classList.add('hidden'), 200);
+    }
+
+    btn.addEventListener('click', open);
+    overlay.addEventListener('click', close);
+
+    backdrop.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', close);
+    });
+  });
+</script>

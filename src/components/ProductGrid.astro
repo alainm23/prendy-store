@@ -1,0 +1,75 @@
+---
+import type { StoreProduct } from '@/lib/api';
+import ProductCard from './ProductCard.astro';
+
+interface Props {
+  products: StoreProduct[];
+  currency: string;
+}
+
+const { products, currency } = Astro.props;
+---
+
+{products.length > 0 ? (
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+    {products.map((product) => (
+      <ProductCard product={product} currency={currency} />
+    ))}
+  </div>
+) : (
+  <div class="text-center py-16">
+    <p class="text-gray-400 dark:text-neutral-500 text-lg">No hay productos disponibles</p>
+  </div>
+)}
+
+<script>
+  const LIKES_KEY = 'prendy_likes';
+
+  function loadLikes(): string[] {
+    try {
+      return JSON.parse(localStorage.getItem(LIKES_KEY) || '[]');
+    } catch { return []; }
+  }
+
+  function saveLikes(likes: string[]) {
+    localStorage.setItem(LIKES_KEY, JSON.stringify(likes));
+  }
+
+  function updateLikeUI(btn: HTMLElement, liked: boolean) {
+    const icon = btn.querySelector('.like-icon') as SVGElement;
+    if (liked) {
+      icon.setAttribute('fill', '#ef4444');
+      icon.setAttribute('stroke', '#ef4444');
+    } else {
+      icon.setAttribute('fill', 'none');
+      icon.setAttribute('stroke', 'currentColor');
+    }
+  }
+
+  // Initialize all like buttons
+  const likes = loadLikes();
+  document.querySelectorAll('.like-btn').forEach((btn) => {
+    const id = (btn as HTMLElement).dataset.productId || '';
+    updateLikeUI(btn as HTMLElement, likes.includes(id));
+  });
+
+  // Handle clicks
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('.like-btn') as HTMLElement;
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const id = btn.dataset.productId || '';
+    let currentLikes = loadLikes();
+
+    if (currentLikes.includes(id)) {
+      currentLikes = currentLikes.filter(l => l !== id);
+    } else {
+      currentLikes.push(id);
+    }
+
+    saveLikes(currentLikes);
+    updateLikeUI(btn, currentLikes.includes(id));
+  });
+</script>

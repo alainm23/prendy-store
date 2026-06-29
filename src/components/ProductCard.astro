@@ -1,0 +1,71 @@
+---
+import type { StoreProduct } from '@/lib/api';
+import { formatPrice } from '@/lib/api';
+
+interface Props {
+  product: StoreProduct;
+  currency: string;
+}
+
+const { product, currency } = Astro.props;
+const imageUrl = product.images?.[0] || product.image;
+const thumbnailUrl = imageUrl?.endsWith('.webp')
+  ? imageUrl.replace('.webp', '_md.webp')
+  : imageUrl;
+---
+
+<article class="bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden border border-gray-100 dark:border-neutral-800 hover:shadow-md transition-shadow group" data-product-name={product.name}>
+  <a href={`/product/${product.id}`} class="block">
+    <div class="aspect-square overflow-hidden bg-gray-100 dark:bg-neutral-800 relative">
+      {thumbnailUrl ? (
+        <img
+          src={thumbnailUrl}
+          alt={product.name}
+          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+          style={`view-transition-name: product-img-${product.id}`}
+        />
+      ) : (
+        <div class="w-full h-full flex items-center justify-center text-gray-300 dark:text-neutral-600">
+          <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </div>
+      )}
+      <button
+        class="like-btn absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 dark:bg-neutral-800/80 backdrop-blur-sm transition-transform active:scale-90"
+        data-product-id={product.id}
+        aria-label="Me gusta"
+      >
+        <svg class="w-4.5 h-4.5 like-icon text-gray-600 dark:text-neutral-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+      </button>
+    </div>
+  </a>
+  <div class="p-3">
+    {product.category && (
+      <span class="text-xs text-gray-500 dark:text-neutral-500 mb-1 block">{product.category.name}</span>
+    )}
+    <a href={`/product/${product.id}`} class="block">
+      <h3 class="font-medium text-gray-900 dark:text-neutral-100 text-sm leading-tight line-clamp-2">{product.name}</h3>
+    </a>
+    <p class="font-bold mt-1" style="color: var(--brand-color)">{formatPrice(product.price, currency)}</p>
+    {product.is_available ? (
+      <button
+        class="add-to-cart mt-2 w-full py-2 px-3 text-sm font-medium rounded-lg transition-colors border"
+        style="background-color: color-mix(in srgb, var(--brand-color) 12%, transparent); border-color: color-mix(in srgb, var(--brand-color) 40%, transparent); color: var(--brand-color)"
+        data-id={product.id}
+        data-name={product.name}
+        data-price={product.price}
+        data-image={thumbnailUrl || ''}
+      >
+        Agregar
+      </button>
+    ) : (
+      <span class="mt-2 block w-full py-2 px-3 text-sm font-medium rounded-lg text-center text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50">
+        Agotado
+      </span>
+    )}
+  </div>
+</article>

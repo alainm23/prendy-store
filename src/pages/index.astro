@@ -1,0 +1,70 @@
+---
+import StoreLayout from '@/layouts/StoreLayout.astro';
+import Header from '@/components/Header.astro';
+import CategoryFilter from '@/components/CategoryFilter.astro';
+import ProductGrid from '@/components/ProductGrid.astro';
+import Cart from '@/components/Cart.astro';
+import Footer from '@/components/Footer.astro';
+import type { StoreBusiness, StoreProduct } from '@/lib/api';
+
+// Mock data
+const business: StoreBusiness = {
+  id: '1',
+  name: 'Sisa Accesorios',
+  description: 'Joyería artesanal hecha a mano en Cusco',
+  logo: 'https://ui-avatars.com/api/?name=Sisa+Accesorios&background=f98085&color=fff&size=128&rounded=true',
+  color: '#f98085',
+  currency: 'PEN',
+  phone: '926213103',
+  dial_code: '+51',
+  address: 'Cusco, Perú',
+  slug: 'sisa-accesorios',
+};
+
+const categories = [
+  { id: '1', name: 'Aretes' },
+  { id: '2', name: 'Collares' },
+  { id: '3', name: 'Pulseras' },
+  { id: '4', name: 'Anillos' },
+];
+
+const products: StoreProduct[] = [
+  { id: '1', name: 'Aretes Luna Plateada', description: 'Aretes en plata 925 con diseño de luna', price: '26.00', image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=400&h=400&fit=crop', images: ['https://images.unsplash.com/photo-1630019852942-f89202989a59?w=400&h=400&fit=crop', 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&h=400&fit=crop', 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=400&h=400&fit=crop'], is_available: true, category: { id: '1', name: 'Aretes', color: '#f98085' } },
+  { id: '2', name: 'Collar Acero Quirúrgico', description: 'Collar minimalista de acero', price: '35.00', image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&h=400&fit=crop', images: ['https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&h=400&fit=crop', 'https://images.unsplash.com/photo-1515562141589-67f0d706d39b?w=400&h=400&fit=crop'], is_available: true, category: { id: '2', name: 'Collares', color: '#3499f8' } },
+  { id: '3', name: 'Pulsera Hilo Rojo', description: 'Pulsera artesanal con piedra natural', price: '18.00', image: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=400&h=400&fit=crop', images: null, is_available: true, category: { id: '3', name: 'Pulseras', color: '#34d399' } },
+  { id: '4', name: 'Anillo Ojo Turco', description: 'Anillo ajustable con ojo turco', price: '22.00', image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&h=400&fit=crop', images: null, is_available: false, category: { id: '4', name: 'Anillos', color: '#a78bfa' } },
+  { id: '5', name: 'Aretes Mariposa Dorada', description: 'Aretes bañados en oro 18k', price: '32.00', image: 'https://images.unsplash.com/photo-1588444837495-c6cfeb53f32d?w=400&h=400&fit=crop', images: ['https://images.unsplash.com/photo-1588444837495-c6cfeb53f32d?w=400&h=400&fit=crop', 'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=400&h=400&fit=crop', 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=400&h=400&fit=crop'], is_available: true, category: { id: '1', name: 'Aretes', color: '#f98085' } },
+  { id: '6', name: 'Collar Corazón Cristal', description: 'Collar con dije de cristal', price: '28.00', image: 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?w=400&h=400&fit=crop', images: null, is_available: false, category: { id: '2', name: 'Collares', color: '#3499f8' } },
+  { id: '7', name: 'Pulsera Perlas Naturales', description: 'Pulsera con perlas de río', price: '45.00', image: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=400&h=400&fit=crop', images: ['https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=400&h=400&fit=crop', 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=400&h=400&fit=crop'], is_available: true, category: { id: '3', name: 'Pulseras', color: '#34d399' } },
+  { id: '8', name: 'Aretes Estrella Mini', description: 'Aretes pequeños de estrella', price: '15.00', image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&h=400&fit=crop', images: null, is_available: true, category: { id: '1', name: 'Aretes', color: '#f98085' } },
+];
+
+const categoryFilter = Astro.url.searchParams.get('category') || undefined;
+const filteredProducts = categoryFilter
+  ? products.filter(p => p.category?.id === categoryFilter)
+  : products;
+---
+
+<StoreLayout title={`${business.name} | Tienda`} description={business.description || undefined} color={business.color} logo={business.logo}>
+  <Header business={business} branchCount={2} />
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <!-- Filtro de categorías + búsqueda -->
+    <div class="mb-6">
+      <CategoryFilter categories={categories} activeCategory={categoryFilter} slug={business.slug} />
+    </div>
+
+    <!-- Grid de productos -->
+    <ProductGrid products={filteredProducts} currency={business.currency} />
+  </main>
+
+  <Footer />
+
+  <!-- Carrito flotante -->
+  <Cart
+    phone={business.phone!}
+    dialCode={business.dial_code!}
+    currency={business.currency}
+    businessName={business.name}
+  />
+</StoreLayout>

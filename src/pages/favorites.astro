@@ -1,0 +1,101 @@
+---
+import StoreLayout from '@/layouts/StoreLayout.astro';
+import Header from '@/components/Header.astro';
+import ProductCard from '@/components/ProductCard.astro';
+import Cart from '@/components/Cart.astro';
+import Footer from '@/components/Footer.astro';
+import type { StoreBusiness, StoreProduct } from '@/lib/api';
+
+// Mock data
+const business: StoreBusiness = {
+  id: '1',
+  name: 'Sisa Accesorios',
+  description: 'Joyería artesanal hecha a mano en Cusco',
+  logo: 'https://ui-avatars.com/api/?name=Sisa+Accesorios&background=f98085&color=fff&size=128&rounded=true',
+  color: '#f98085',
+  currency: 'PEN',
+  phone: '926213103',
+  dial_code: '+51',
+  address: 'Cusco, Perú',
+  slug: 'sisa-accesorios',
+};
+
+const allProducts: StoreProduct[] = [
+  { id: '1', name: 'Aretes Luna Plateada', description: '', price: '26.00', image: '', images: null, category: { id: '1', name: 'Aretes', color: '#f98085' } },
+  { id: '2', name: 'Collar Acero Quirúrgico', description: '', price: '35.00', image: '', images: null, category: { id: '2', name: 'Collares', color: '#3499f8' } },
+  { id: '3', name: 'Pulsera Hilo Rojo', description: '', price: '18.00', image: '', images: null, category: { id: '3', name: 'Pulseras', color: '#34d399' } },
+  { id: '4', name: 'Anillo Ojo Turco', description: '', price: '22.00', image: '', images: null, category: { id: '4', name: 'Anillos', color: '#a78bfa' } },
+  { id: '5', name: 'Aretes Mariposa Dorada', description: '', price: '32.00', image: '', images: null, category: { id: '1', name: 'Aretes', color: '#f98085' } },
+  { id: '6', name: 'Collar Corazón Cristal', description: '', price: '28.00', image: '', images: null, category: { id: '2', name: 'Collares', color: '#3499f8' } },
+  { id: '7', name: 'Pulsera Perlas Naturales', description: '', price: '45.00', image: '', images: null, category: { id: '3', name: 'Pulseras', color: '#34d399' } },
+  { id: '8', name: 'Aretes Estrella Mini', description: '', price: '15.00', image: '', images: null, category: { id: '1', name: 'Aretes', color: '#f98085' } },
+];
+---
+
+<StoreLayout title={`Favoritos | ${business.name}`} description="Mis productos favoritos" color={business.color} logo={business.logo}>
+  <Header business={business} branchCount={2} />
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <nav class="mb-4">
+      <a href="/" class="text-sm text-gray-500 dark:text-neutral-500 hover:text-gray-700 dark:hover:text-neutral-300 transition-colors">
+        ← Volver a la tienda
+      </a>
+    </nav>
+
+    <h2 class="text-xl font-bold text-gray-900 dark:text-neutral-100 mb-4">❤️ Mis Favoritos</h2>
+
+    <!-- Se llena dinámicamente con JS -->
+    <div id="favorites-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      {allProducts.map((product) => (
+        <div data-fav-id={product.id} style="display: none;">
+          <ProductCard product={product} currency={business.currency} />
+        </div>
+      ))}
+    </div>
+
+    <div id="favorites-empty" class="text-center py-16 hidden">
+      <p class="text-4xl mb-3">💔</p>
+      <p class="text-gray-400 dark:text-neutral-500 text-lg">Aún no tienes favoritos</p>
+      <a href="/" class="inline-block mt-4 text-sm font-medium hover:underline" style="color: var(--brand-color)">
+        Explorar productos
+      </a>
+    </div>
+  </main>
+
+  <Footer />
+
+  <Cart
+    phone={business.phone!}
+    dialCode={business.dial_code!}
+    currency={business.currency}
+    businessName={business.name}
+  />
+</StoreLayout>
+
+<script>
+  const LIKES_KEY = 'prendy_likes';
+
+  function loadLikes(): string[] {
+    try {
+      return JSON.parse(localStorage.getItem(LIKES_KEY) || '[]');
+    } catch { return []; }
+  }
+
+  const likes = loadLikes();
+  const grid = document.getElementById('favorites-grid')!;
+  const empty = document.getElementById('favorites-empty')!;
+  let visibleCount = 0;
+
+  grid.querySelectorAll('[data-fav-id]').forEach((el) => {
+    const id = (el as HTMLElement).dataset.favId || '';
+    if (likes.includes(id)) {
+      (el as HTMLElement).style.display = '';
+      visibleCount++;
+    }
+  });
+
+  if (visibleCount === 0) {
+    grid.classList.add('hidden');
+    empty.classList.remove('hidden');
+  }
+</script>

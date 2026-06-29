@@ -1,0 +1,109 @@
+---
+import StoreLayout from '@/layouts/StoreLayout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import type { StoreBusiness } from '@/lib/api';
+
+// Mock data
+const business: StoreBusiness = {
+  id: '1',
+  name: 'Sisa Accesorios',
+  description: 'Joyería artesanal hecha a mano en Cusco',
+  logo: 'https://ui-avatars.com/api/?name=Sisa+Accesorios&background=f98085&color=fff&size=128&rounded=true',
+  color: '#f98085',
+  currency: 'PEN',
+  phone: '926213103',
+  dial_code: '+51',
+  address: 'Cusco, Perú',
+  slug: 'sisa-accesorios',
+};
+
+const branches = [
+  {
+    id: '1',
+    name: 'Sucursal Principal',
+    address: 'Av. El Sol 123, Centro Histórico',
+    phone: '926213103',
+    image: null,
+    schedule: [
+      { days: 'Lunes a Viernes', hours: '9:00 - 19:00' },
+      { days: 'Sábado', hours: '9:00 - 14:00' },
+      { days: 'Domingo', hours: 'Cerrado' },
+    ],
+  },
+  {
+    id: '2',
+    name: 'Sucursal San Blas',
+    address: 'Cuesta San Blas 456',
+    phone: '984567890',
+    image: null,
+    schedule: [
+      { days: 'Lunes a Sábado', hours: '10:00 - 18:00' },
+      { days: 'Domingo', hours: 'Cerrado' },
+    ],
+  },
+];
+---
+
+<StoreLayout title={`Sucursales | ${business.name}`} description="Nuestras sucursales y horarios de atención" color={business.color} logo={business.logo}>
+  <Header business={business} />
+
+  <main class="max-w-3xl mx-auto px-4 py-6">
+    <nav class="mb-4">
+      <a href="/" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        ← Volver a la tienda
+      </a>
+    </nav>
+
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">📍 Nuestras Sucursales</h2>
+
+    <div class="flex flex-col gap-4">
+      {branches.map((branch) => (
+        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+          {branch.image && (
+            <img src={branch.image} alt={branch.name} class="w-full h-40 object-cover" />
+          )}
+          <div class="p-4">
+            <h3 class="font-bold text-gray-900 dark:text-white text-lg">{branch.name}</h3>
+
+            <div class="flex flex-col gap-2 mt-3">
+              <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>{branch.address}</span>
+              </div>
+
+              {branch.phone && (
+                <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  <a href={`tel:${branch.phone}`} class="hover:underline">{branch.phone}</a>
+                </div>
+              )}
+            </div>
+
+            <!-- Horarios -->
+            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+              <p class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">🕐 Horarios de atención</p>
+              <div class="flex flex-col gap-1">
+                {branch.schedule.map((slot) => (
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-400">{slot.days}</span>
+                    <span class:list={['font-medium', slot.hours === 'Cerrado' ? 'text-red-500' : 'text-gray-900 dark:text-white']}>
+                      {slot.hours}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </main>
+
+  <Footer />
+</StoreLayout>

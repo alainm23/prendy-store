@@ -1,0 +1,121 @@
+---
+interface Props {
+  phone: string;
+  dialCode: string;
+  currency: string;
+  businessName: string;
+}
+
+const { phone, dialCode, currency, businessName } = Astro.props;
+---
+
+<!-- Cart floating bar -->
+<div id="cart-bar" class="fixed bottom-0 left-0 right-0 z-50 translate-y-full transition-transform duration-300">
+  <div class="max-w-6xl mx-auto px-4 pb-[env(safe-area-inset-bottom)]">
+    <div class="text-white rounded-2xl mb-4 p-4 shadow-2xl" style="background-color: var(--brand-color)">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-white/70"><span id="cart-count">0</span> productos</p>
+          <p class="text-lg font-bold" id="cart-total">S/0.00</p>
+        </div>
+        <button
+          id="cart-send-btn"
+          class="px-5 py-2.5 bg-white/20 text-white font-medium rounded-xl hover:bg-white/30 transition-colors flex items-center gap-2 backdrop-blur-sm"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+            <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/>
+          </svg>
+          Enviar pedido
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ phone, dialCode, currency, businessName }}>
+  const currencySymbols = { PEN: 'S/', USD: '$', EUR: '€', MXN: '$', COP: '$' };
+  const symbol = currencySymbols[currency] || currency + ' ';
+
+  const CART_KEY = 'prendy_cart';
+
+  function loadCart() {
+    try {
+      return JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+    } catch { return []; }
+  }
+
+  function saveCart(cart) {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  }
+
+  let cart = loadCart();
+
+  function updateCartUI() {
+    const bar = document.getElementById('cart-bar');
+    const countEl = document.getElementById('cart-count');
+    const totalEl = document.getElementById('cart-total');
+
+    const totalItems = cart.reduce((acc, item) => acc + item.qty, 0);
+    const totalPrice = cart.reduce((acc, item) => acc + item.qty * parseFloat(item.price), 0);
+
+    countEl.textContent = totalItems;
+    totalEl.textContent = `${symbol}${totalPrice.toFixed(2)}`;
+
+    if (totalItems > 0) {
+      bar.classList.remove('translate-y-full');
+    } else {
+      bar.classList.add('translate-y-full');
+    }
+  }
+
+  function addToCart(id, name, price) {
+    const existing = cart.find((item) => item.id === id);
+    if (existing) {
+      existing.qty++;
+    } else {
+      cart.push({ id, name, price, qty: 1 });
+    }
+    saveCart(cart);
+    updateCartUI();
+  }
+
+  // Delegate click events for add-to-cart buttons
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.add-to-cart');
+    if (btn) {
+      const { id, name, price } = btn.dataset;
+      addToCart(id, name, price);
+
+      // Feedback visual
+      btn.textContent = '✓ Agregado';
+      btn.classList.add('bg-green-600');
+      setTimeout(() => {
+        btn.textContent = 'Agregar';
+        btn.classList.remove('bg-green-600');
+      }, 1000);
+    }
+  });
+
+  // Send order via WhatsApp
+  document.getElementById('cart-send-btn')?.addEventListener('click', () => {
+    if (cart.length === 0) return;
+
+    const lines = cart.map((item) => `• ${item.qty}x ${item.name} - ${symbol}${(item.qty * parseFloat(item.price)).toFixed(2)}`);
+    const total = cart.reduce((acc, item) => acc + item.qty * parseFloat(item.price), 0);
+
+    const message = `¡Hola! Quiero hacer un pedido:\n\n${lines.join('\n')}\n\nTotal: ${symbol}${total.toFixed(2)}`;
+    const fullPhone = `${dialCode}${phone}`.replace(/[^0-9]/g, '');
+    const url = `https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`;
+
+    window.open(url, '_blank');
+
+    // Limpiar carrito después de enviar
+    cart = [];
+    saveCart(cart);
+    updateCartUI();
+  });
+
+  // Inicializar UI al cargar
+  updateCartUI();
+</script>

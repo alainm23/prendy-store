@@ -1,0 +1,123 @@
+---
+interface Props {
+  categories: { id: string; name: string }[];
+  activeCategory?: string;
+  slug: string;
+}
+
+const { categories, activeCategory } = Astro.props;
+---
+
+<div class="filter-bar">
+  <!-- Categorías (visible por defecto) -->
+  <div id="categories-row" class="filter-view">
+    <button
+      id="open-search-btn"
+      class="shrink-0 px-3 py-2 rounded-full text-sm font-medium border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-gray-500 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors flex items-center gap-1.5"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <span class="hidden sm:inline">Buscar</span>
+    </button>
+    <a
+      href="/"
+      class:list={[
+        'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border',
+        !activeCategory
+          ? 'chip-active'
+          : 'bg-white dark:bg-neutral-900 text-gray-600 dark:text-neutral-400 border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800',
+      ]}
+    >
+      Todos
+    </a>
+    {categories.map((cat) => (
+      <a
+        href={`/?category=${cat.id}`}
+        class:list={[
+          'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border',
+          activeCategory === cat.id
+            ? 'chip-active'
+            : 'bg-white dark:bg-neutral-900 text-gray-600 dark:text-neutral-400 border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800',
+        ]}
+      >
+        {cat.name}
+      </a>
+    ))}
+  </div>
+
+  <!-- Buscador (oculto por defecto) -->
+  <div id="search-row" class="filter-view hidden">
+    <div class="relative flex-1">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-neutral-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input
+        id="search-input"
+        type="text"
+        placeholder="Buscar productos..."
+        class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-full text-sm text-gray-900 dark:text-neutral-100 placeholder-gray-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-[var(--brand-color)] focus:border-transparent transition-shadow"
+      />
+    </div>
+    <button
+      id="close-search-btn"
+      class="shrink-0 px-3 py-2 rounded-full text-sm font-medium text-gray-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-neutral-200 transition-colors"
+    >
+      Cancelar
+    </button>
+  </div>
+</div>
+
+<style>
+  .filter-bar {
+    position: relative;
+  }
+
+  .filter-view {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .filter-view.hidden {
+    display: none;
+  }
+
+  .chip-active {
+    background-color: color-mix(in srgb, var(--brand-color) 12%, transparent);
+    border-color: color-mix(in srgb, var(--brand-color) 40%, transparent);
+    color: var(--brand-color);
+  }
+</style>
+
+<script>
+  const categoriesRow = document.getElementById('categories-row')!;
+  const searchRow = document.getElementById('search-row')!;
+  const openBtn = document.getElementById('open-search-btn')!;
+  const closeBtn = document.getElementById('close-search-btn')!;
+  const input = document.getElementById('search-input') as HTMLInputElement;
+
+  openBtn.addEventListener('click', () => {
+    categoriesRow.classList.add('hidden');
+    searchRow.classList.remove('hidden');
+    setTimeout(() => input.focus(), 50);
+  });
+
+  closeBtn.addEventListener('click', () => {
+    searchRow.classList.add('hidden');
+    categoriesRow.classList.remove('hidden');
+    input.value = '';
+    document.querySelectorAll('[data-product-name]').forEach((card) => {
+      (card as HTMLElement).style.display = '';
+    });
+  });
+
+  input?.addEventListener('input', () => {
+    const query = input.value.toLowerCase().trim();
+    document.querySelectorAll('[data-product-name]').forEach((card) => {
+      const name = (card as HTMLElement).dataset.productName?.toLowerCase() || '';
+      (card as HTMLElement).style.display = (!query || name.includes(query)) ? '' : 'none';
+    });
+  });
+</script>

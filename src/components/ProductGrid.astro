@@ -6,71 +6,106 @@ interface Props {
   products: StoreProduct[];
   currency: string;
   baseUrl?: string;
+  hasPhone?: boolean;
+  showPrices?: boolean;
 }
 
-const { products, currency, baseUrl = '' } = Astro.props;
+const { products, currency, baseUrl = '', hasPhone = true, showPrices = true } = Astro.props;
 ---
 
 {products.length > 0 ? (
-  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+  <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
     {products.map((product) => (
-      <ProductCard product={product} currency={currency} baseUrl={baseUrl} />
+      <ProductCard product={product} currency={currency} baseUrl={baseUrl} hasPhone={hasPhone} showPrices={showPrices} />
     ))}
   </div>
 ) : (
-  <div class="text-center py-16">
+  <div id="products-empty" class="text-center py-16">
     <p class="text-gray-400 dark:text-neutral-500 text-lg">No hay productos disponibles</p>
   </div>
+  <div id="products-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 hidden"></div>
 )}
 
 <script>
-  const LIKES_KEY = 'prendy_likes';
+  document.addEventListener('astro:page-load', () => {
+    const LIKES_KEY = 'prendy_likes';
 
-  function loadLikes(): string[] {
-    try {
-      return JSON.parse(localStorage.getItem(LIKES_KEY) || '[]');
-    } catch { return []; }
-  }
-
-  function saveLikes(likes: string[]) {
-    localStorage.setItem(LIKES_KEY, JSON.stringify(likes));
-  }
-
-  function updateLikeUI(btn: HTMLElement, liked: boolean) {
-    const icon = btn.querySelector('.like-icon') as SVGElement;
-    if (liked) {
-      icon.setAttribute('fill', '#ef4444');
-      icon.setAttribute('stroke', '#ef4444');
-    } else {
-      icon.setAttribute('fill', 'none');
-      icon.setAttribute('stroke', 'currentColor');
-    }
-  }
-
-  // Initialize all like buttons
-  const likes = loadLikes();
-  document.querySelectorAll('.like-btn').forEach((btn) => {
-    const id = (btn as HTMLElement).dataset.productId || '';
-    updateLikeUI(btn as HTMLElement, likes.includes(id));
-  });
-
-  // Handle clicks
-  document.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest('.like-btn') as HTMLElement;
-    if (!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-
-    const id = btn.dataset.productId || '';
-    let currentLikes = loadLikes();
-
-    if (currentLikes.includes(id)) {
-      currentLikes = currentLikes.filter(l => l !== id);
-    } else {
-      currentLikes.push(id);
+    function loadLikes(): string[] {
+      try {
+        return JSON.parse(localStorage.getItem(LIKES_KEY) || '[]');
+      } catch { return []; }
     }
 
-    saveLikes(currentLikes);
-    updateLikeUI(btn, currentLikes.includes(id));
+    function saveLikes(likes: string[]) {
+      localStorage.setItem(LIKES_KEY, JSON.stringify(likes));
+    }
+
+    function updateLikeUI(btn: HTMLElement, liked: boolean) {
+      const icon = btn.querySelector('.like-icon') as SVGElement;
+      if (liked) {
+        icon.setAttribute('fill', '#ef4444');
+        icon.setAttribute('stroke', '#ef4444');
+        // Pop animation
+        btn.style.transform = 'scale(1.4)';
+        setTimeout(() => { btn.style.transform = ''; }, 200);
+      } else {
+        icon.setAttribute('fill', 'none');
+        icon.setAttribute('stroke', 'currentColor');
+        btn.style.transform = 'scale(0.8)';
+        setTimeout(() => { btn.style.transform = ''; }, 200);
+      }
+    }
+
+    // Initialize all like buttons
+    const likes = loadLikes();
+    document.querySelectorAll('.like-btn').forEach((btn) => {
+      const id = (btn as HTMLElement).dataset.productId || '';
+      updateLikeUI(btn as HTMLElement, likes.includes(id));
+    });
+
+    // Re-sync likes on back navigation
+    window.addEventListener('pageshow', (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        const freshLikes = loadLikes();
+        document.querySelectorAll('.like-btn').forEach((btn) => {
+          const id = (btn as HTMLElement).dataset.productId || '';
+          updateLikeUI(btn as HTMLElement, freshLikes.includes(id));
+        });
+      }
+    });
+
+    // Handle like clicks
+    document.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('.like-btn') as HTMLElement;
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const id = btn.dataset.productId || '';
+      let currentLikes = loadLikes();
+
+      if (currentLikes.includes(id)) {
+        currentLikes = currentLikes.filter(l => l !== id);
+      } else {
+        currentLikes.push(id);
+      }
+
+      saveLikes(currentLikes);
+      updateLikeUI(btn, currentLikes.includes(id));
+    });
+
+    // Loading feedback on product card click
+    document.querySelectorAll('article[data-product-name] a').forEach((link) => {
+      link.addEventListener('click', () => {
+        const article = link.closest('article');
+        const imgContainer = article?.querySelector('.aspect-square');
+        if (!imgContainer) return;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'absolute inset-0 bg-white/60 dark:bg-neutral-900/60 flex items-center justify-center z-10';
+        overlay.innerHTML = `<svg class="animate-spin w-6 h-6 text-gray-600 dark:text-neutral-300" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>`;
+        imgContainer.appendChild(overlay);
+      });
+    });
   });
 </script>

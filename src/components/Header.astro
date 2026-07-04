@@ -1,8 +1,18 @@
 ---
-import type { StoreBusiness } from '@/lib/api';
+import { Icon } from 'astro-icon/components';
 
 interface Props {
-  business: StoreBusiness;
+  business: {
+    name: string;
+    description: string | null;
+    logo: string | null;
+    color: string;
+    currency: string;
+    phone: string | null;
+    dial_code: string | null;
+    address: string | null;
+    slug: string;
+  };
   branchCount?: number;
   slug?: string;
 }
@@ -17,30 +27,32 @@ const { business, branchCount = 1, slug = '' } = Astro.props;
   <div class="bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800">
     <div class="max-w-6xl mx-auto px-4 py-4">
       <div class="flex items-center gap-3">
-        <!-- Logo -->
-        {business.logo ? (
-          <div class="shrink-0">
-            <img
-              src={business.logo}
-              alt={business.name}
-              class="w-11 h-11 rounded-xl object-cover ring-2 ring-gray-100 dark:ring-neutral-800"
-            />
-          </div>
-        ) : (
-          <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white text-lg font-bold shrink-0" style={`background: var(--brand-color)`}>
-            {business.name.charAt(0)}
-          </div>
-        )}
-
-        <!-- Info -->
-        <div class="flex-1 min-w-0">
-          <h1 class="text-base font-bold text-gray-900 dark:text-neutral-100 truncate">{business.name}</h1>
-          {business.description ? (
-            <p class="text-xs text-gray-500 dark:text-neutral-500 truncate">{business.description}</p>
-          ) : business.address && (
-            <p class="text-xs text-gray-500 dark:text-neutral-500 truncate">📍 {business.address}</p>
+        <!-- Logo + Name (clickable to home) -->
+        <a href={`/${slug}`} class="flex items-center gap-3 min-w-0 flex-1 cursor-pointer no-underline">
+          {business.logo ? (
+            <div class="shrink-0">
+              <img
+                src={business.logo}
+                alt={business.name}
+                class="w-11 h-11 rounded-xl object-cover ring-2 ring-gray-100 dark:ring-neutral-800"
+              />
+            </div>
+          ) : (
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white text-lg font-bold shrink-0" style={`background: var(--brand-color)`}>
+              {business.name.charAt(0)}
+            </div>
           )}
-        </div>
+
+          <!-- Info -->
+          <div class="flex-1 min-w-0">
+            <h1 class="text-base font-bold text-gray-900 dark:text-neutral-100 truncate">{business.name}</h1>
+            {business.description ? (
+              <p class="text-xs text-gray-500 dark:text-neutral-500 truncate">{business.description}</p>
+            ) : business.address && (
+              <p class="text-xs text-gray-500 dark:text-neutral-500 truncate">📍 {business.address}</p>
+            )}
+          </div>
+        </a>
 
         <!-- Actions Desktop -->
         <div class="hidden sm:flex items-center gap-1.5">
@@ -49,21 +61,16 @@ const { business, branchCount = 1, slug = '' } = Astro.props;
             class="flex items-center justify-center w-9 h-9 rounded-xl bg-gray-50 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors"
             aria-label="Favoritos"
           >
-            <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
+            <Icon name="lucide:heart" class="w-[18px] h-[18px]" />
           </a>
 
-          {branchCount > 1 && (
+          {branchCount >= 1 && (
             <a
               href={`/${slug}/info`}
               class="flex items-center justify-center w-9 h-9 rounded-xl bg-gray-50 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors"
               aria-label="Sucursales"
             >
-              <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              <Icon name="lucide:map-pin" class="w-[18px] h-[18px]" />
             </a>
           )}
 
@@ -106,9 +113,7 @@ const { business, branchCount = 1, slug = '' } = Astro.props;
             class="flex items-center justify-center w-9 h-9 rounded-xl bg-gray-50 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400 hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors"
             aria-label="Menú"
           >
-            <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <Icon name="lucide:menu" class="w-[18px] h-[18px]" />
           </button>
         </div>
       </div>
@@ -125,20 +130,15 @@ const { business, branchCount = 1, slug = '' } = Astro.props;
           href={`/${slug}/favorites`}
           class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
         >
-          <svg class="w-[16px] h-[16px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
+          <Icon name="lucide:heart" class="w-[16px] h-[16px]" />
           Favoritos
         </a>
-        {branchCount > 1 && (
+        {branchCount >= 1 && (
           <a
             href={`/${slug}/info`}
             class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 dark:text-neutral-300 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors"
           >
-            <svg class="w-[16px] h-[16px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <Icon name="lucide:map-pin" class="w-[16px] h-[16px]" />
             Sucursales
           </a>
         )}

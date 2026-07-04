@@ -1,70 +1,57 @@
 ---
+import { Icon } from 'astro-icon/components';
+
 interface Props {
   categories: { id: string; name: string }[];
   activeCategory?: string;
   slug: string;
+  currency?: string;
 }
 
-const { categories, activeCategory, slug } = Astro.props;
+const { categories, activeCategory, slug, currency = 'PEN' } = Astro.props;
 ---
 
 <div class="filter-bar">
-  <!-- Categorías (visible por defecto) -->
-  <div id="categories-row" class="filter-view">
-    <button
-      id="open-search-btn"
-      class="shrink-0 px-3 py-2 rounded-full text-sm font-medium border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-gray-500 dark:text-neutral-400 hover:bg-gray-50 dark:hover:bg-neutral-800 transition-colors flex items-center gap-1.5"
-    >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-      <span class="hidden sm:inline">Buscar</span>
-    </button>
-    <a
-      href={`/${slug}`}
-      class:list={[
-        'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border',
-        !activeCategory
-          ? 'chip-active'
-          : 'bg-white dark:bg-neutral-900 text-gray-600 dark:text-neutral-400 border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800',
-      ]}
-    >
-      Todos
-    </a>
-    {categories.map((cat) => (
-      <a
-        href={`/${slug}?category=${cat.id}`}
-        class:list={[
-          'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors border',
-          activeCategory === cat.id
-            ? 'chip-active'
-            : 'bg-white dark:bg-neutral-900 text-gray-600 dark:text-neutral-400 border-gray-200 dark:border-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-800',
-        ]}
-      >
-        {cat.name}
-      </a>
-    ))}
-  </div>
-
-  <!-- Buscador (oculto por defecto) -->
-  <div id="search-row" class="filter-view hidden">
-    <div class="relative flex-1">
-      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-neutral-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
+  <div class="filter-row">
+    <!-- Search button / expandable input -->
+    <div id="search-wrapper" class="search-wrapper" data-slug={slug} data-api-url={import.meta.env.PUBLIC_API_URL || 'http://localhost:3000'} data-currency={currency}>
+      <button id="search-toggle" class="search-btn" aria-label="Buscar">
+        <Icon name="lucide:search" class="w-4 h-4" />
+      </button>
       <input
         id="search-input"
         type="text"
         placeholder="Buscar productos..."
-        class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-full text-sm text-gray-900 dark:text-neutral-100 placeholder-gray-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-[var(--brand-color)] focus:border-transparent transition-shadow"
+        class="search-input"
       />
+      <button id="search-close" class="search-close" aria-label="Cerrar búsqueda">
+        <Icon name="lucide:x" class="w-4 h-4" />
+      </button>
     </div>
-    <button
-      id="close-search-btn"
-      class="shrink-0 px-3 py-2 rounded-full text-sm font-medium text-gray-500 dark:text-neutral-400 hover:text-gray-700 dark:hover:text-neutral-200 transition-colors"
-    >
-      Cancelar
-    </button>
+
+    <!-- Categories -->
+    <div id="categories-row" class="categories-row">
+      <a
+        href={`/${slug}`}
+        class:list={[
+          'chip',
+          !activeCategory && 'chip-active',
+        ]}
+      >
+        Todos
+      </a>
+      {categories.map((cat) => (
+        <a
+          href={`/${slug}?category=${cat.id}`}
+          class:list={[
+            'chip',
+            activeCategory === cat.id && 'chip-active',
+          ]}
+        >
+          {cat.name}
+        </a>
+      ))}
+    </div>
   </div>
 </div>
 
@@ -73,15 +60,70 @@ const { categories, activeCategory, slug } = Astro.props;
     position: relative;
   }
 
-  .filter-view {
+  .filter-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
-  .filter-view.hidden {
+  .filter-row::-webkit-scrollbar {
     display: none;
+  }
+
+  .categories-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .categories-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .categories-row.fade-right {
+    mask-image: linear-gradient(to left, transparent 0%, black 8%);
+    -webkit-mask-image: linear-gradient(to left, transparent 0%, black 8%);
+  }
+
+  .categories-row.fade-left {
+    mask-image: linear-gradient(to right, transparent 0%, black 8%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%);
+  }
+
+  .categories-row.fade-left.fade-right {
+    mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  }
+
+  .categories-row.hidden {
+    opacity: 0;
+    transform: translateX(10px);
+    pointer-events: none;
+    position: absolute;
+  }
+
+  .chip {
+    padding: 8px 16px;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    background: color-mix(in srgb, var(--brand-color) 8%, transparent);
+    color: var(--brand-color);
+    border: 1px solid color-mix(in srgb, var(--brand-color) 25%, transparent);
+  }
+
+  .chip:hover {
+    background: color-mix(in srgb, var(--brand-color) 15%, transparent);
   }
 
   .chip-active {
@@ -89,35 +131,286 @@ const { categories, activeCategory, slug } = Astro.props;
     border-color: color-mix(in srgb, var(--brand-color) 40%, transparent);
     color: var(--brand-color);
   }
+
+  /* Search wrapper */
+  .search-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in srgb, var(--brand-color) 40%, transparent);
+    background: color-mix(in srgb, var(--brand-color) 12%, transparent);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+  }
+
+  .search-wrapper.expanded {
+    flex: 1;
+    min-width: 100%;
+  }
+
+  .search-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border: none;
+    background: none;
+    color: var(--brand-color);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .search-input {
+    flex: 1;
+    width: 0;
+    border: none;
+    outline: none;
+    font-size: 0.875rem;
+    background: transparent;
+    color: var(--brand-color);
+    padding: 0 8px 0 0;
+    opacity: 0;
+    transition: opacity 0.2s ease 0.1s;
+  }
+
+  .search-input::placeholder {
+    color: color-mix(in srgb, var(--brand-color) 50%, transparent);
+  }
+
+  .search-wrapper.expanded .search-input {
+    width: auto;
+    opacity: 1;
+  }
+
+  .search-close {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border: none;
+    background: none;
+    color: var(--brand-color);
+    cursor: pointer;
+    padding: 0;
+    margin-right: 4px;
+    border-radius: 50%;
+    transition: background 0.15s ease;
+  }
+
+  .search-close:hover {
+    background: color-mix(in srgb, var(--brand-color) 15%, transparent);
+  }
+
+  .search-wrapper.expanded .search-close {
+    display: flex;
+  }
 </style>
 
 <script>
-  const categoriesRow = document.getElementById('categories-row')!;
-  const searchRow = document.getElementById('search-row')!;
-  const openBtn = document.getElementById('open-search-btn')!;
-  const closeBtn = document.getElementById('close-search-btn')!;
-  const input = document.getElementById('search-input') as HTMLInputElement;
+  document.addEventListener('astro:page-load', () => {
+    const wrapper = document.getElementById('search-wrapper');
+    const toggle = document.getElementById('search-toggle');
+    const input = document.getElementById('search-input') as HTMLInputElement | null;
+    const close = document.getElementById('search-close');
+    const categories = document.getElementById('categories-row');
 
-  openBtn.addEventListener('click', () => {
-    categoriesRow.classList.add('hidden');
-    searchRow.classList.remove('hidden');
-    setTimeout(() => input.focus(), 50);
-  });
+    if (!wrapper || !toggle || !input || !close || !categories) return;
 
-  closeBtn.addEventListener('click', () => {
-    searchRow.classList.add('hidden');
-    categoriesRow.classList.remove('hidden');
-    input.value = '';
-    document.querySelectorAll('[data-product-name]').forEach((card) => {
-      (card as HTMLElement).style.display = '';
+    function expand() {
+      wrapper!.classList.add('expanded');
+      categories!.classList.add('hidden');
+      setTimeout(() => input!.focus(), 300);
+    }
+
+    function collapse() {
+      wrapper!.classList.remove('expanded');
+      categories!.classList.remove('hidden');
+      input!.value = '';
+      // Show all original products and remove search-generated ones
+      let hasOriginalProducts = false;
+      document.querySelectorAll('[data-product-name]').forEach((card) => {
+        if ((card as HTMLElement).dataset.searchResult === 'true') {
+          card.remove();
+        } else {
+          (card as HTMLElement).style.display = '';
+          hasOriginalProducts = true;
+        }
+      });
+      // Restore empty state if needed
+      const emptyState = document.getElementById('products-empty');
+      const grid = document.getElementById('products-grid');
+      if (!hasOriginalProducts && emptyState && grid) {
+        emptyState.classList.remove('hidden');
+        grid.classList.add('hidden');
+      }
+    }
+
+    toggle.addEventListener('click', () => {
+      if (wrapper!.classList.contains('expanded')) return;
+      expand();
     });
-  });
 
-  input?.addEventListener('input', () => {
-    const query = input.value.toLowerCase().trim();
-    document.querySelectorAll('[data-product-name]').forEach((card) => {
-      const name = (card as HTMLElement).dataset.productName?.toLowerCase() || '';
-      (card as HTMLElement).style.display = (!query || name.includes(query)) ? '' : 'none';
+    close.addEventListener('click', collapse);
+
+    input!.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') collapse();
+    });
+
+    // Search with debounce against API
+    let searchTimeout: ReturnType<typeof setTimeout>;
+
+    input!.addEventListener('input', () => {
+      const query = input!.value.trim();
+
+      // If empty, show all products
+      if (!query) {
+        document.querySelectorAll('[data-product-name]').forEach((card) => {
+          (card as HTMLElement).style.display = '';
+        });
+        const resultsContainer = document.getElementById('search-results');
+        if (resultsContainer) resultsContainer.classList.add('hidden');
+        const mainGrid = document.querySelector('[data-product-name]')?.parentElement;
+        if (mainGrid) (mainGrid as HTMLElement).style.display = '';
+        return;
+      }
+
+      // Local filter immediately
+      document.querySelectorAll('[data-product-name]').forEach((card) => {
+        const name = (card as HTMLElement).dataset.productName?.toLowerCase() || '';
+        (card as HTMLElement).style.display = (!query || name.toLowerCase().includes(query.toLowerCase())) ? '' : 'none';
+      });
+
+      // Debounced API search
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(async () => {
+        const slug = wrapper!.dataset.slug || '';
+        const apiUrl = wrapper!.dataset.apiUrl || '';
+        if (!slug || !apiUrl || !query) return;
+
+        try {
+          const params = new URLSearchParams({ search: query });
+          const res = await fetch(`${apiUrl}/api/v1/store/${slug}/products?${params}`);
+          if (!res.ok) return;
+          const json = await res.json();
+          const products = json.data?.data ?? json.data ?? [];
+
+          if (products.length === 0) {
+            // Hide all cards if no results
+            document.querySelectorAll('[data-product-name]').forEach((card) => {
+              (card as HTMLElement).style.display = 'none';
+            });
+            return;
+          }
+
+          // Get the grid container
+          const grid = document.getElementById('products-grid') as HTMLElement;
+          if (!grid) return;
+
+          // Show grid, hide empty state
+          grid.classList.remove('hidden');
+          const emptyState = document.getElementById('products-empty');
+          if (emptyState) emptyState.classList.add('hidden');
+
+          // Build a set of IDs currently in DOM
+          const existingIds = new Set<string>();
+          document.querySelectorAll('[data-product-name]').forEach((card) => {
+            const link = card.querySelector('a[href*="/product/"]');
+            const href = link?.getAttribute('href') || '';
+            const id = href.split('/product/').pop() || '';
+            if (id) existingIds.add(id);
+          });
+
+          // Hide all existing cards first
+          document.querySelectorAll('[data-product-name]').forEach((card) => {
+            (card as HTMLElement).style.display = 'none';
+          });
+
+          // Show existing ones that match, or create new ones
+          const resultIds = products.map((p: any) => p.id);
+
+          // Show matched existing cards
+          document.querySelectorAll('[data-product-name]').forEach((card) => {
+            const link = card.querySelector('a[href*="/product/"]');
+            const href = link?.getAttribute('href') || '';
+            const id = href.split('/product/').pop() || '';
+            if (resultIds.includes(id)) {
+              (card as HTMLElement).style.display = '';
+            }
+          });
+
+          // For products not in DOM, render them dynamically
+          const missingProducts = products.filter((p: any) => !existingIds.has(p.id));
+          if (missingProducts.length > 0) {
+            const currency = wrapper!.dataset.currency || 'PEN';
+            const symbols: Record<string, string> = { PEN: 'S/', USD: '$', EUR: '€', MXN: '$', COP: '$' };
+            const symbol = symbols[currency] || currency + ' ';
+
+            missingProducts.forEach((product: any) => {
+              const imgUrl = product.images?.[0] || product.image;
+              const thumbUrl = imgUrl?.endsWith('.webp') ? imgUrl.replace('.webp', '_md.webp') : imgUrl;
+              const productUrl = `/${slug}/product/${product.id}`;
+              const html = `
+                <article class="bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden border border-gray-100 dark:border-neutral-800 hover:shadow-md transition-shadow" data-product-name="${product.name}" data-search-result="true">
+                  <div class="relative">
+                    <a href="${productUrl}" class="block">
+                      <div class="aspect-square overflow-hidden bg-gray-100 dark:bg-neutral-800 relative">
+                        ${thumbUrl
+                          ? `<img src="${thumbUrl}" alt="${product.name}" class="w-full h-full object-cover" loading="lazy" />`
+                          : `<div class="w-full h-full flex items-center justify-center text-gray-300 dark:text-neutral-600"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg></div>`
+                        }
+                      </div>
+                    </a>
+                  </div>
+                  <div class="p-3">
+                    ${product.category ? `<span class="text-xs text-gray-500 dark:text-neutral-500 mb-1 block">${product.category.name}</span>` : ''}
+                    <a href="${productUrl}" class="block">
+                      <h3 class="font-medium text-gray-900 dark:text-neutral-100 text-sm leading-tight line-clamp-2">${product.name}</h3>
+                    </a>
+                    <p class="font-bold mt-1" style="color: var(--brand-color)">${symbol}${Number(product.price).toFixed(2)}</p>
+                  </div>
+                </article>
+              `;
+              grid.insertAdjacentHTML('beforeend', html);
+            });
+          }
+        } catch {}
+      }, 400);
+    });
+
+    // Fade edges on scroll
+    function updateFade() {
+      const el = categories!;
+      const scrollLeft = el.scrollLeft;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+
+      el.classList.toggle('fade-left', scrollLeft > 4);
+      el.classList.toggle('fade-right', scrollLeft < maxScroll - 4);
+    }
+
+    categories!.addEventListener('scroll', updateFade);
+    updateFade();
+
+    // Scroll active chip into view
+    const activeChip = categories!.querySelector('.chip-active') as HTMLElement;
+    if (activeChip) {
+      activeChip.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
+      setTimeout(updateFade, 50);
+    }
+
+    // Loading feedback on category click
+    categories.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        link.style.opacity = '0.6';
+        const text = link.textContent?.trim() || '';
+        link.innerHTML = `<svg class="animate-spin w-4 h-4 inline-block mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>${text}`;
+      });
     });
   });
 </script>

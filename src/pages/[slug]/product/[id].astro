@@ -1,59 +1,43 @@
 ---
+import { Icon } from 'astro-icon/components';
 import StoreLayout from '@/layouts/StoreLayout.astro';
 import Header from '@/components/Header.astro';
 import Cart from '@/components/Cart.astro';
 import Footer from '@/components/Footer.astro';
-import type { StoreBusiness, StoreProduct } from '@/lib/api';
-import { formatPrice } from '@/lib/api';
+import { getStoreBySlug, getStoreProductDetail, formatPrice } from '@/lib/api';
 
-// Mock data (misma que index)
 const { slug, id } = Astro.params;
 
-const business: StoreBusiness = {
-  id: '1',
-  name: 'Sisa Accesorios',
-  description: 'Joyería artesanal hecha a mano en Cusco',
-  logo: 'https://ui-avatars.com/api/?name=Sisa+Accesorios&background=f98085&color=fff&size=128&rounded=true',
-  color: '#f98085',
-  currency: 'PEN',
-  phone: '926213103',
-  dial_code: '+51',
-  address: 'Cusco, Perú',
-  slug: 'sisa-accesorios',
-};
+const [store, product] = await Promise.all([
+  getStoreBySlug(slug!),
+  getStoreProductDetail(slug!, id!),
+]);
 
-const allProducts: StoreProduct[] = [
-  { id: '1', name: 'Aretes Luna Plateada', description: 'Aretes en plata 925 con diseño de luna creciente. Perfectos para el día a día o una salida especial. Hipoalergénicos y ligeros.', price: '26.00', image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=400&h=400&fit=crop', images: ['https://images.unsplash.com/photo-1630019852942-f89202989a59?w=800&h=800&fit=crop', 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&h=800&fit=crop', 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&h=800&fit=crop'], category: { id: '1', name: 'Aretes', color: '#f98085' } },
-  { id: '2', name: 'Collar Acero Quirúrgico', description: 'Collar minimalista de acero quirúrgico con dije delicado. No se oxida ni genera alergias. Largo ajustable.', price: '35.00', image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&h=400&fit=crop', images: ['https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&h=800&fit=crop', 'https://images.unsplash.com/photo-1515562141589-67f0d706d39b?w=800&h=800&fit=crop'], category: { id: '2', name: 'Collares', color: '#3499f8' } },
-  { id: '3', name: 'Pulsera Hilo Rojo', description: 'Pulsera artesanal de hilo rojo con piedra natural de cuarzo. Simboliza protección y buena energía.', price: '18.00', image: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=400&h=400&fit=crop', images: null, category: { id: '3', name: 'Pulseras', color: '#34d399' } },
-  { id: '4', name: 'Anillo Ojo Turco', description: 'Anillo ajustable con ojo turco en resina. Talla única. Protección contra energías negativas.', price: '22.00', image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&h=400&fit=crop', images: null, category: { id: '4', name: 'Anillos', color: '#a78bfa' } },
-  { id: '5', name: 'Aretes Mariposa Dorada', description: 'Aretes bañados en oro 18k con diseño de mariposa. Cierre de presión seguro.', price: '32.00', image: 'https://images.unsplash.com/photo-1588444837495-c6cfeb53f32d?w=400&h=400&fit=crop', images: ['https://images.unsplash.com/photo-1588444837495-c6cfeb53f32d?w=800&h=800&fit=crop', 'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&h=800&fit=crop', 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=800&h=800&fit=crop'], category: { id: '1', name: 'Aretes', color: '#f98085' } },
-  { id: '6', name: 'Collar Corazón Cristal', description: 'Collar con dije de cristal en forma de corazón. Cadena de acero inoxidable de 45cm.', price: '28.00', image: 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?w=400&h=400&fit=crop', images: null, category: { id: '2', name: 'Collares', color: '#3499f8' } },
-  { id: '7', name: 'Pulsera Perlas Naturales', description: 'Pulsera con perlas de río genuinas, seleccionadas a mano. Cierre de plata.', price: '45.00', image: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=400&h=400&fit=crop', images: ['https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&h=800&fit=crop', 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=800&h=800&fit=crop'], category: { id: '3', name: 'Pulseras', color: '#34d399' } },
-  { id: '8', name: 'Aretes Estrella Mini', description: 'Aretes pequeños de estrella en acero. Ideales para uso diario. Peso pluma.', price: '15.00', image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&h=400&fit=crop', images: null, category: { id: '1', name: 'Aretes', color: '#f98085' } },
-];
-
-const product = allProducts.find(p => p.id === id);
-
+if (!store) return Astro.redirect('/');
 if (!product) {
   return new Response('Producto no encontrado', { status: 404 });
 }
+
+const businessView = {
+  name: store.business.name,
+  description: store.description,
+  logo: store.business.logo,
+  color: store.business.color || '#3499f8',
+  currency: store.business.currency,
+  phone: store.business.phone,
+  dial_code: store.business.dial_code,
+  address: store.branches[0]?.address || null,
+  slug: store.slug,
+};
 
 const imageUrl = product.images?.[0] || product.image || null;
 const productImages = product.images || (product.image ? [product.image] : []);
 ---
 
-<StoreLayout title={`${product.name} | ${business.name}`} description={product.description} color={business.color} logo={business.logo}>
-  <Header business={business} slug={slug} />
+<StoreLayout title={`${product.name} | ${businessView.name}`} description={product.description} color={businessView.color} logo={businessView.logo} ogImage={imageUrl}>
+  <Header business={businessView} slug={slug} />
 
   <main class="max-w-3xl mx-auto px-4 py-6">
-    <!-- Breadcrumb -->
-    <nav class="mb-4">
-      <a href={`/${slug}`} class="text-sm text-gray-500 dark:text-neutral-500 hover:text-gray-700 dark:hover:text-neutral-300 transition-colors">
-        ← Volver a la tienda
-      </a>
-    </nav>
-
     <div class="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 overflow-hidden">
       <!-- Imagen / Galería -->
       <div class="relative">
@@ -80,9 +64,7 @@ const productImages = product.images || (product.image ? [product.image] : []);
               <img src={imageUrl} alt={product.name} class="w-full h-full object-cover" style={`view-transition-name: product-img-${product.id}`} />
             ) : (
               <div class="w-full h-full flex items-center justify-center text-gray-300 dark:text-neutral-600">
-                <svg class="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
+                <Icon name="lucide:package" class="w-20 h-20" />
               </div>
             )}
           </div>
@@ -95,24 +77,28 @@ const productImages = product.images || (product.image ? [product.image] : []);
           <span class="text-sm text-gray-500 dark:text-neutral-500 mb-1 block">{product.category.name}</span>
         )}
         <h1 class="text-xl font-bold text-gray-900 dark:text-neutral-100">{product.name}</h1>
-        <p class="text-2xl font-bold mt-2" style="color: var(--brand-color)">
-          {formatPrice(product.price, business.currency)}
-        </p>
+        {store.show_prices && (
+          <p class="text-2xl font-bold mt-2" style="color: var(--brand-color)">
+            {formatPrice(product.price, businessView.currency)}
+          </p>
+        )}
 
         {product.description && (
           <p class="text-gray-600 dark:text-neutral-400 mt-4 leading-relaxed">{product.description}</p>
         )}
 
-        <button
-          class="add-to-cart mt-6 w-full py-3 px-4 text-base font-medium rounded-xl transition-colors border"
-          style="background-color: color-mix(in srgb, var(--brand-color) 12%, transparent); border-color: color-mix(in srgb, var(--brand-color) 40%, transparent); color: var(--brand-color)"
-          data-id={product.id}
-          data-name={product.name}
-          data-price={product.price}
-          data-image={imageUrl || ''}
-        >
-          Agregar al pedido
-        </button>
+        {businessView.phone && (
+          <button
+            class="add-to-cart mt-6 w-full py-3 px-4 text-base font-medium rounded-xl transition-colors border"
+            style="background-color: color-mix(in srgb, var(--brand-color) 12%, transparent); border-color: color-mix(in srgb, var(--brand-color) 40%, transparent); color: var(--brand-color)"
+            data-id={product.id}
+            data-name={product.name}
+            data-price={product.price}
+            data-image={imageUrl || ''}
+          >
+            Agregar al pedido
+          </button>
+        )}
 
         <button
           id="share-btn"
@@ -120,9 +106,7 @@ const productImages = product.images || (product.image ? [product.image] : []);
           data-title={product.name}
           data-text={`Mira este producto: ${product.name}`}
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-          </svg>
+          <Icon name="lucide:share-2" class="w-5 h-5" />
           Compartir
         </button>
       </div>
@@ -132,10 +116,11 @@ const productImages = product.images || (product.image ? [product.image] : []);
   <Footer />
 
   <Cart
-    phone={business.phone!}
-    dialCode={business.dial_code!}
-    currency={business.currency}
-    businessName={business.name}
+    phone={businessView.phone!}
+    dialCode={businessView.dial_code!}
+    currency={businessView.currency}
+    businessName={businessView.name}
+    slug={slug!}
   />
 </StoreLayout>
 
@@ -250,3 +235,24 @@ const productImages = product.images || (product.image ? [product.image] : []);
     opacity: 0.8;
   }
 </style>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const pathParts = window.location.pathname.split('/');
+    const slug = pathParts[1];
+    const productId = pathParts[3]; // /{slug}/product/{id}
+    if (!slug || !productId) return;
+
+    // Deduplicate: only track once per session per product
+    const key = `tracked_product_${productId}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+
+    const apiUrl = document.querySelector('meta[name="api-url"]')?.getAttribute('content') || '';
+    fetch(`${apiUrl}/api/v1/store/${slug}/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'product_view', product_id: productId }),
+    }).catch(() => {});
+  });
+</script>

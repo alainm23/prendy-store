@@ -1,60 +1,46 @@
 ---
+import { Icon } from 'astro-icon/components';
 import StoreLayout from '@/layouts/StoreLayout.astro';
 import Header from '@/components/Header.astro';
-import ProductCard from '@/components/ProductCard.astro';
 import Cart from '@/components/Cart.astro';
 import Footer from '@/components/Footer.astro';
-import type { StoreBusiness, StoreProduct } from '@/lib/api';
+import { getStoreBySlug } from '@/lib/api';
 
-// Mock data
 const { slug } = Astro.params;
 
-const business: StoreBusiness = {
-  id: '1',
-  name: 'Sisa Accesorios',
-  description: 'Joyería artesanal hecha a mano en Cusco',
-  logo: 'https://ui-avatars.com/api/?name=Sisa+Accesorios&background=f98085&color=fff&size=128&rounded=true',
-  color: '#f98085',
-  currency: 'PEN',
-  phone: '926213103',
-  dial_code: '+51',
-  address: 'Cusco, Perú',
-  slug: 'sisa-accesorios',
+const store = await getStoreBySlug(slug!);
+if (!store) return Astro.redirect('/');
+
+const businessView = {
+  name: store.business.name,
+  description: store.description,
+  logo: store.business.logo,
+  color: store.business.color || '#3499f8',
+  currency: store.business.currency,
+  phone: store.business.phone,
+  dial_code: store.business.dial_code,
+  address: store.branches[0]?.address || null,
+  slug: store.slug,
 };
 
-const allProducts: StoreProduct[] = [
-  { id: '1', name: 'Aretes Luna Plateada', description: '', price: '26.00', image: '', images: null, category: { id: '1', name: 'Aretes', color: '#f98085' } },
-  { id: '2', name: 'Collar Acero Quirúrgico', description: '', price: '35.00', image: '', images: null, category: { id: '2', name: 'Collares', color: '#3499f8' } },
-  { id: '3', name: 'Pulsera Hilo Rojo', description: '', price: '18.00', image: '', images: null, category: { id: '3', name: 'Pulseras', color: '#34d399' } },
-  { id: '4', name: 'Anillo Ojo Turco', description: '', price: '22.00', image: '', images: null, category: { id: '4', name: 'Anillos', color: '#a78bfa' } },
-  { id: '5', name: 'Aretes Mariposa Dorada', description: '', price: '32.00', image: '', images: null, category: { id: '1', name: 'Aretes', color: '#f98085' } },
-  { id: '6', name: 'Collar Corazón Cristal', description: '', price: '28.00', image: '', images: null, category: { id: '2', name: 'Collares', color: '#3499f8' } },
-  { id: '7', name: 'Pulsera Perlas Naturales', description: '', price: '45.00', image: '', images: null, category: { id: '3', name: 'Pulseras', color: '#34d399' } },
-  { id: '8', name: 'Aretes Estrella Mini', description: '', price: '15.00', image: '', images: null, category: { id: '1', name: 'Aretes', color: '#f98085' } },
-];
+const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
 ---
 
-<StoreLayout title={`Favoritos | ${business.name}`} description="Mis productos favoritos" color={business.color} logo={business.logo}>
-  <Header business={business} branchCount={2} slug={slug} />
+<StoreLayout title={`Favoritos | ${businessView.name}`} description="Mis productos favoritos" color={businessView.color} logo={businessView.logo}>
+  <Header business={businessView} branchCount={store.branches.length} slug={slug} />
 
   <main class="max-w-6xl mx-auto px-4 py-6">
-    <nav class="mb-4">
-      <a href={`/${slug}`} class="text-sm text-gray-500 dark:text-neutral-500 hover:text-gray-700 dark:hover:text-neutral-300 transition-colors">
-        ← Volver a la tienda
-      </a>
-    </nav>
+    <h2 class="text-xl font-bold text-gray-900 dark:text-neutral-100 mb-4">Mis Favoritos</h2>
 
-    <h2 class="text-xl font-bold text-gray-900 dark:text-neutral-100 mb-4">❤️ Mis Favoritos</h2>
-
-    <!-- Se llena dinámicamente con JS -->
-    <div id="favorites-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-      {allProducts.map((product) => (
-        <div data-fav-id={product.id} style="display: none;">
-          <ProductCard product={product} currency={business.currency} />
-        </div>
-      ))}
+    <!-- Loading -->
+    <div id="favorites-loading" class="text-center py-16">
+      <Icon name="lucide:loader-circle" class="animate-spin w-6 h-6 mx-auto text-gray-400" />
     </div>
 
+    <!-- Grid (se llena con JS) -->
+    <div id="favorites-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 hidden" data-slug={slug} data-currency={businessView.currency} data-api-url={apiUrl}></div>
+
+    <!-- Empty state -->
     <div id="favorites-empty" class="text-center py-16 hidden">
       <p class="text-4xl mb-3">💔</p>
       <p class="text-gray-400 dark:text-neutral-500 text-lg">Aún no tienes favoritos</p>
@@ -66,38 +52,95 @@ const allProducts: StoreProduct[] = [
 
   <Footer />
 
-  <Cart
-    phone={business.phone!}
-    dialCode={business.dial_code!}
-    currency={business.currency}
-    businessName={business.name}
-  />
+  {businessView.phone && businessView.dial_code && (
+    <Cart
+      phone={businessView.phone}
+      dialCode={businessView.dial_code}
+      currency={businessView.currency}
+      businessName={businessView.name}
+    />
+  )}
 </StoreLayout>
 
 <script>
-  const LIKES_KEY = 'prendy_likes';
+  document.addEventListener('astro:page-load', () => {
+    const LIKES_KEY = 'prendy_likes';
+    const grid = document.getElementById('favorites-grid') as HTMLElement | null;
+    const loading = document.getElementById('favorites-loading') as HTMLElement | null;
+    const empty = document.getElementById('favorites-empty') as HTMLElement | null;
 
-  function loadLikes(): string[] {
-    try {
-      return JSON.parse(localStorage.getItem(LIKES_KEY) || '[]');
-    } catch { return []; }
-  }
+    if (!grid || !loading || !empty) return;
 
-  const likes = loadLikes();
-  const grid = document.getElementById('favorites-grid')!;
-  const empty = document.getElementById('favorites-empty')!;
-  let visibleCount = 0;
+    const slug = grid.dataset.slug || '';
+    const apiUrl = grid.dataset.apiUrl || '';
+    const currency = grid.dataset.currency || 'PEN';
 
-  grid.querySelectorAll('[data-fav-id]').forEach((el) => {
-    const id = (el as HTMLElement).dataset.favId || '';
-    if (likes.includes(id)) {
-      (el as HTMLElement).style.display = '';
-      visibleCount++;
+    function loadLikes(): string[] {
+      try { return JSON.parse(localStorage.getItem(LIKES_KEY) || '[]'); }
+      catch { return []; }
     }
-  });
 
-  if (visibleCount === 0) {
-    grid.classList.add('hidden');
-    empty.classList.remove('hidden');
-  }
+    function formatPrice(price: string, curr: string) {
+      const symbols: Record<string, string> = { PEN: 'S/', USD: '$', EUR: '€', MXN: '$', COP: '$' };
+      return (symbols[curr] || curr + ' ') + Number(price).toFixed(2);
+    }
+
+    function buildCard(product: any) {
+      const imgUrl = product.images?.[0] || product.image;
+      const thumbUrl = imgUrl?.endsWith('.webp') ? imgUrl.replace('.webp', '_md.webp') : imgUrl;
+      const productUrl = `/${slug}/product/${product.id}`;
+      const imgHtml = thumbUrl
+        ? `<img src="${thumbUrl}" alt="${product.name}" class="w-full h-full object-cover" loading="lazy" />`
+        : `<div class="w-full h-full flex items-center justify-center text-gray-300 dark:text-neutral-600"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg></div>`;
+      const catHtml = product.category ? `<span class="text-xs text-gray-500 dark:text-neutral-500 mb-1 block">${product.category.name}</span>` : '';
+
+      return `<article class="bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden border border-gray-100 dark:border-neutral-800 hover:shadow-md transition-shadow">
+        <a href="${productUrl}" class="block"><div class="aspect-square overflow-hidden bg-gray-100 dark:bg-neutral-800">${imgHtml}</div></a>
+        <div class="p-3">${catHtml}
+          <a href="${productUrl}" class="block"><h3 class="font-medium text-gray-900 dark:text-neutral-100 text-sm leading-tight line-clamp-2">${product.name}</h3></a>
+          <p class="font-bold mt-1" style="color: var(--brand-color)">${formatPrice(product.price, currency)}</p>
+        </div>
+      </article>`;
+    }
+
+    async function loadFavorites() {
+      const likes = loadLikes();
+
+      loading!.classList.remove('hidden');
+      grid!.classList.add('hidden');
+      empty!.classList.add('hidden');
+      grid!.innerHTML = '';
+
+      if (likes.length === 0) {
+        loading!.classList.add('hidden');
+        empty!.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${apiUrl}/api/v1/store/${slug}/products/batch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: likes }),
+        });
+        const json = await res.json();
+        const products = json.data ?? [];
+
+        loading!.classList.add('hidden');
+
+        if (products.length === 0) {
+          empty!.classList.remove('hidden');
+          return;
+        }
+
+        grid!.innerHTML = products.map(buildCard).join('');
+        grid!.classList.remove('hidden');
+      } catch {
+        loading!.classList.add('hidden');
+        empty!.classList.remove('hidden');
+      }
+    }
+
+    loadFavorites();
+  });
 </script>

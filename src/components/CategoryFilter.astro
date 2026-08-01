@@ -4,15 +4,28 @@ import { Icon } from 'astro-icon/components';
 interface Props {
   categories: { id: string; name: string }[];
   activeCategory?: string;
+  activeSort?: string;
   slug: string;
   currency?: string;
 }
 
-const { categories, activeCategory, slug, currency = 'PEN' } = Astro.props;
+const { categories, activeCategory, activeSort, slug, currency = 'PEN' } = Astro.props;
+
+const sortOptions = [
+  { value: '', label: 'Más recientes' },
+  { value: 'price_asc', label: 'Precio: menor a mayor' },
+  { value: 'price_desc', label: 'Precio: mayor a menor' },
+  { value: 'name_asc', label: 'Nombre: A - Z' },
+];
 ---
 
 <div class="filter-bar">
   <div class="filter-row">
+    <!-- Sort button -->
+    <button id="sort-toggle" class="sort-toggle-btn" aria-label="Ordenar">
+      <Icon name="lucide:arrow-up-down" class="w-4 h-4" />
+    </button>
+
     <!-- Search button / expandable input -->
     <div id="search-wrapper" class="search-wrapper" data-slug={slug} data-api-url={import.meta.env.PUBLIC_API_URL || 'http://localhost:3000'} data-currency={currency}>
       <button id="search-toggle" class="search-btn" aria-label="Buscar">
@@ -52,6 +65,19 @@ const { categories, activeCategory, slug, currency = 'PEN' } = Astro.props;
         </a>
       ))}
     </div>
+  </div>
+
+  <!-- Sort dropdown (outside filter-row to avoid overflow clipping) -->
+  <div id="sort-dropdown" class="sort-dropdown" style="display:none;">
+    {sortOptions.map((opt) => (
+      <button
+        class:list={['sort-option', (activeSort || '') === opt.value && 'sort-option-active']}
+        data-sort-value={opt.value}
+      >
+        {opt.label}
+        {(activeSort || '') === opt.value && <Icon name="lucide:check" class="w-3.5 h-3.5" />}
+      </button>
+    ))}
   </div>
 </div>
 
@@ -148,7 +174,6 @@ const { categories, activeCategory, slug, currency = 'PEN' } = Astro.props;
 
   .search-wrapper.expanded {
     flex: 1;
-    min-width: 100%;
   }
 
   .search-btn {
@@ -211,10 +236,132 @@ const { categories, activeCategory, slug, currency = 'PEN' } = Astro.props;
   .search-wrapper.expanded .search-close {
     display: flex;
   }
+
+  /* Sort */
+  .sort-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in srgb, var(--brand-color) 25%, transparent);
+    background: color-mix(in srgb, var(--brand-color) 8%, transparent);
+    color: var(--brand-color);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sort-toggle-btn:hover {
+    background: color-mix(in srgb, var(--brand-color) 15%, transparent);
+  }
+
+  .sort-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 100;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(12px);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .sort-dropdown {
+      background: #171717;
+      border-color: #374151;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  .sort-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #1f2937;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s ease;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .sort-option {
+      color: #e5e7eb;
+    }
+  }
+
+  .sort-option:hover {
+    background: #f3f4f6;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .sort-option:hover {
+      background: #1f2937;
+    }
+  }
+
+  .sort-option-active {
+    color: var(--brand-color);
+    font-weight: 600;
+    background: color-mix(in srgb, var(--brand-color) 8%, transparent);
+  }
 </style>
 
 <script>
   document.addEventListener('astro:page-load', () => {
+    // Sort dropdown
+    const sortToggle = document.getElementById('sort-toggle');
+    const sortDropdown = document.getElementById('sort-dropdown');
+
+    if (sortToggle && sortDropdown) {
+
+      sortToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const isHidden = sortDropdown.style.display === 'none' || !sortDropdown.style.display;
+        sortDropdown.style.display = isHidden ? 'flex' : 'none';
+      });
+
+      document.addEventListener('click', () => {
+        sortDropdown.style.display = 'none';
+      });
+
+      sortDropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
+      sortDropdown.querySelectorAll('.sort-option').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const value = (btn as HTMLElement).dataset.sortValue || '';
+          const url = new URL(window.location.href);
+          if (value) {
+            url.searchParams.set('sort', value);
+          } else {
+            url.searchParams.delete('sort');
+          }
+          window.location.href = url.toString();
+        });
+      });
+    } else {
+      // Sort elements not found
+    }
+
+    // Search
     const wrapper = document.getElementById('search-wrapper');
     const toggle = document.getElementById('search-toggle');
     const input = document.getElementById('search-input') as HTMLInputElement | null;

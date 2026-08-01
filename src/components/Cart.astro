@@ -103,12 +103,12 @@ const { phone, dialCode, currency, businessName, slug } = Astro.props;
       const btn = (e.target as HTMLElement).closest('.add-to-cart') as HTMLElement;
       if (!btn) return;
 
-      const { id, name, price } = btn.dataset;
+      const { id, name, price, sku } = btn.dataset;
       const existing = cart.find((item) => item.id === id);
       if (existing) {
         existing.qty++;
       } else {
-        cart.push({ id, name, price, qty: 1 });
+        cart.push({ id, name, price, sku, qty: 1 });
       }
       saveCart(cart);
       updateCartUI();
@@ -122,7 +122,10 @@ const { phone, dialCode, currency, businessName, slug } = Astro.props;
     document.getElementById('cart-send-btn')?.addEventListener('click', () => {
       if (cart.length === 0) return;
 
-      const lines = cart.map((item) => `• ${item.qty}x ${item.name} - ${symbol}${(item.qty * parseFloat(item.price)).toFixed(2)}`);
+      const lines = cart.map((item) => {
+        const skuText = item.sku ? ` (${item.sku})` : '';
+        return `• ${item.qty}x ${item.name}${skuText} - ${symbol}${(item.qty * parseFloat(item.price)).toFixed(2)}`;
+      });
       const total = cart.reduce((acc, item) => acc + item.qty * parseFloat(item.price), 0);
 
       const message = `¡Hola! Quiero hacer un pedido:\n\n${lines.join('\n')}\n\nTotal: ${symbol}${total.toFixed(2)}`;

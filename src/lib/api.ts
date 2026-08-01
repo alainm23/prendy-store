@@ -62,14 +62,15 @@ export async function getStoreBySlug(slug: string): Promise<StoreBusiness | null
   }
 }
 
-export async function getStoreProducts(slug: string, category?: string): Promise<StoreProduct[]> {
-  const cacheKey = `products:${slug}:${category || 'all'}`;
+export async function getStoreProducts(slug: string, category?: string, sort?: string): Promise<StoreProduct[]> {
+  const cacheKey = `products:${slug}:${category || 'all'}:${sort || 'default'}`;
   const cached = cache.get<StoreProduct[]>(cacheKey);
   if (cached) return cached;
 
   try {
     const params = new URLSearchParams();
     if (category) params.set('category', category);
+    if (sort) params.set('sort', sort);
     const res = await fetch(`${API_URL}/api/v1/store/${slug}/products?${params}`);
     if (!res.ok) {
       console.log(`[getStoreProducts] ${slug} → ${res.status}`);

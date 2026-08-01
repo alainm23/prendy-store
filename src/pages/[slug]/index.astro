@@ -9,11 +9,12 @@ import { getStoreBySlug, getStoreProducts, getStoreCategories } from '@/lib/api'
 
 const { slug } = Astro.params;
 const categoryFilter = Astro.url.searchParams.get('category') || undefined;
+const sortFilter = Astro.url.searchParams.get('sort') || undefined;
 
 const [store, categories, products] = await Promise.all([
   getStoreBySlug(slug!),
   getStoreCategories(slug!),
-  getStoreProducts(slug!, categoryFilter),
+  getStoreProducts(slug!, categoryFilter, sortFilter),
 ]);
 
 if (!store) return Astro.redirect('/');
@@ -37,7 +38,7 @@ const businessView = {
 
   <main class="max-w-6xl mx-auto px-4 py-6">
     <div class="mb-6">
-      <CategoryFilter categories={categories} activeCategory={categoryFilter} slug={store.slug} currency={businessView.currency} />
+      <CategoryFilter categories={categories} activeCategory={categoryFilter} slug={store.slug} currency={businessView.currency} activeSort={sortFilter} />
     </div>
 
     <ProductGrid products={products} currency={businessView.currency} baseUrl={`/${slug}`} hasPhone={!!businessView.phone} showPrices={store.show_prices} />

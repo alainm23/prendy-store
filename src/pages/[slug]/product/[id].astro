@@ -94,6 +94,7 @@ const productImages = product.images || (product.image ? [product.image] : []);
             data-id={product.id}
             data-name={product.name}
             data-price={product.price}
+            data-sku={product.sku || ''}
             data-image={imageUrl || ''}
           >
             Agregar al pedido
